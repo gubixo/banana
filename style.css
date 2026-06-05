@@ -27,8 +27,8 @@
   --projects-text: #3C3489;
   --goals-bg: #FAEEDA;
   --goals-text: #854F0B;
-  --books-bg: #FAECE7;
-  --books-text: #993C1D;
+  --books-bg: #f58ee5;
+  --books-text: ##e330c8;
 }
 
 body {
@@ -180,7 +180,7 @@ nav {
 .tag-projects { background: var(--projects-bg); color: var(--projects-text); }
 .tag-goals    { background: var(--goals-bg);    color: var(--goals-text); }
 .tag-books    { background: var(--books-bg);    color: var(--books-text); }
-.tag-nursing  { background: #EDE9FE;            color: #4C1D95; }
+.tag-nursing  { background: #E6F1FB;            color: ##185FA5; }
 
 /* section page header accent bar */
 .section-header {

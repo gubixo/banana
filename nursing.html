@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>firefly — nursing</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── page bg ── */
+    body { background: #f9f8f6; }
+
+    /* ── semester switcher ── */
+    .sem-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .sem-tab {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: lowercase;
+      padding: 7px 18px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sem-tab:hover { border-color: #c8c6c0; color: var(--text-primary); }
+    .sem-tab.active {
+      background: var(--text-primary);
+      color: #f9f8f6;
+      border-color: var(--text-primary);
+    }
+
+    /* ── unit strip ── */
+    .unit-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .unit-pill {
+      flex: 1 1 80px;
+      min-width: 80px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid;
+    }
+    .unit-pill .ul { font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+    .unit-pill .us { font-size: 11px; margin-top: 2px; color: var(--text-secondary); }
+    .unit-pill .uw { font-size: 10px; margin-top: 2px; color: var(--text-muted); font-family: monospace; }
+
+    /* ── progress ── */
+    .prog-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 2rem;
+    }
+    .prog-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .prog-row span:last-child { color: var(--text-primary); font-weight: 700; }
+    .prog-bar { height: 5px; background: #f1ede8; border-radius: 99px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; background: #85d5f2; }
+
+    /* ── week accordion ── */
+    .weeks { display: flex; flex-direction: column; gap: 8px; }
+    .week-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .week-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .week-card.open { box-shadow: 0 2px 16px rgba(0,0,0,.08); }
+
+    .week-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 15px 18px;
+      color: inherit;
+      font-family: 'DM Sans', sans-serif;
+      text-align: left;
+      text-transform: lowercase;
+    }
+    .week-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .week-num {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+      font-family: monospace;
+    }
+    .week-meta { flex: 1; min-width: 0; }
+    .week-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+    .week-date { font-size: 10px; letter-spacing: 2px; font-family: monospace; }
+    .badge {
+      display: inline-block; font-size: 10px;
+      padding: 2px 7px; border-radius: 6px; font-family: monospace;
+    }
+    .badge-done { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .week-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .chevron { color: var(--text-muted); font-size: 11px; flex-shrink: 0; transition: transform 0.2s; }
+    .week-card.open .chevron { transform: rotate(180deg); }
+
+    .week-body { display: none; padding: 0 18px 20px; }
+    .week-card.open .week-body { display: block; }
+    .wdivider { height: 1px; background: var(--border); margin-bottom: 18px; }
+    .section-label {
+      font-size: 10px; letter-spacing: 3px;
+      color: var(--text-muted); margin-bottom: 12px;
+      font-family: monospace; text-transform: lowercase;
+    }
+
+    /* ── readings ── */
+    .reading-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 10px; cursor: pointer;
+    }
+    .reading-item:hover { opacity: 0.8; }
+    .checkbox {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 1.5px solid var(--text-muted);
+      flex-shrink: 0; margin-top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-size: 10px; font-weight: 900; color: #fff;
+    }
+    .checkbox.checked { border-color: transparent; }
+    .reading-text { flex: 1; }
+    .reading-ch { font-size: 14px; color: var(--text-primary); line-height: 1.4; transition: color 0.15s; }
+    .reading-ch.checked { color: var(--text-muted); text-decoration: line-through; }
+    .reading-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: monospace; }
+
+    /* ── focus + tip ── */
+    .two-col { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+    @media(min-width:560px){ .two-col { grid-template-columns: 1fr 1fr; } }
+    .focus-box {
+      background: #fafaf9; border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 15px;
+    }
+    .focus-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+    .focus-arrow { font-size: 13px; line-height: 1.5; flex-shrink: 0; }
+    .focus-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .tip-box { border-radius: 10px; padding: 14px 15px; }
+    .tip-label { font-size: 10px; letter-spacing: 3px; margin-bottom: 10px; font-family: monospace; text-transform: lowercase; }
+    .tip-text { font-size: 13px; line-height: 1.65; color: var(--text-primary); }
+
+    /* ── color picker fab ── */
+    #color-fab {
+      position: fixed; bottom: 24px; right: 20px;
+      width: 44px; height: 44px; border-radius: 50%;
+      border: none; cursor: pointer; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,.15); z-index: 200;
+      background: #1a1a18; color: #f9f8f6;
+      transition: transform 0.15s;
+    }
+    #color-fab:hover { transform: scale(1.08); }
+    #color-panel {
+      position: fixed; bottom: 80px; right: 16px; width: 300px;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px; z-index: 200;
+      display: none; box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    }
+    #color-panel.open { display: block; }
+    .cp-title {
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 14px; font-family: monospace;
+      letter-spacing: 1px; text-transform: lowercase;
+    }
+    .cp-unit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cp-unit-name { font-size: 12px; color: var(--text-secondary); width: 60px; flex-shrink: 0; font-family: monospace; }
+    .cp-swatches { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+    .cp-swatch {
+      width: 20px; height: 20px; border-radius: 4px;
+      cursor: pointer; border: 2px solid transparent;
+      transition: transform 0.1s, border-color 0.1s; flex-shrink: 0;
+    }
+    .cp-swatch:hover { transform: scale(1.18); }
+    .cp-swatch.active { border-color: #1a1a18; }
+    .cp-done {
+      width: 100%; margin-top: 10px; padding: 8px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: #1a1a18; color: #f9f8f6;
+      font-size: 13px; font-family: monospace; cursor: pointer; font-weight: 700;
+    }
+    .cp-done:hover { opacity: 0.85; }
+
+    :root {
+      --border: #e4e2dc;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b66;
+      --text-muted: #a8a8a2;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <nav>
+      <a href="index.html" class="nav-logo">firefly</a>
+      <div class="nav-links">
+        <a href="index.html">home</a>
+      </div>
+    </nav>
+
+    <a href="index.html" class="back-link">← back</a>
+
+    <div class="section-header">
+      <span class="section-label tag tag-nursing" id="nursing-label" style="background:#EDE9FE;color:#4C1D95;">nursing</span>
+      <h1>nursing</h1>
+      <p id="sem-subtitle">select a semester to load your study schedule.</p>
+    </div>
+
+    <!-- semester switcher -->
+    <div class="sem-tabs">
+      <button class="sem-tab" data-sem="fall" onclick="switchSem('fall')">fall</button>
+      <button class="sem-tab" data-sem="spring" onclick="switchSem('spring')">spring</button>
+      <button class="sem-tab" data-sem="summer" onclick="switchSem('summer')">summer</button>
+    </div>
+
+    <!-- unit strip -->
+    <div class="unit-strip" id="unit-strip"></div>
+
+    <!-- progress -->
+    <div class="prog-card" id="prog-card" style="display:none">
+      <div class="prog-row">
+        <span>weeks with all readings checked off</span>
+        <span id="prog-label">0 / 0</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- empty state -->
+    <div id="empty-state" style="text-align:center;padding:4rem 0;color:var(--text-muted);font-size:14px;">
+      <div style="font-size:32px;margin-bottom:12px;">📖</div>
+      <p>choose a semester above to see your study schedule.</p>
+    </div>
+
+    <!-- weeks accordion -->
+    <div class="weeks" id="weeks-container"></div>
+
+  </div>
+
+  <!-- color picker fab -->
+  <button id="color-fab" aria-label="customize colors">🎨</button>
+  <div id="color-panel" role="dialog" aria-label="color picker">
+    <div class="cp-title">customize unit colors</div>
+    <div id="cp-rows"></div>
+    <button class="cp-done" id="cp-done">done</button>
+  </div>
+
+<script>
+// ── SEMESTER DATA ──────────────────────────────────────────────────
+// Each semester has: label, subtitle, units (metadata), and weeks (schedule).
+// Add your real content here — this is placeholder structure to get you started.
+
+const SEMESTERS = {
+  fall: {
+    label: "fall semester",
+    subtitle: "add your fall semester details here.",
+    units: {
+      u1: { label: "unit 01", sub: "topic", weeks: "1–3" },
+      u2: { label: "unit 02", sub: "topic", weeks: "4–6" },
+      u3: { label: "unit 03", sub: "topic", weeks: "7–9" },
+      ur: { label: "review",  sub: "finals",  weeks: "10" },
+    },
+    weeks: [
+      {
+        week: 1, dates: "week 1", unit: "u1",
+        theme: "unit 01 — add your topic here",
+        readings: [
+          { book: "Textbook", ch: "ch. 1 — chapter name", range: "1–30", pages: 30 },
+        ],
+        focus: ["key concept 1", "key concept 2", "key concept 3"],
+        tip: "add your study tip for this week here.",
+      },
+      {
+        week: 2, dates: "week 2", unit: "u1",
+        theme: "unit 01 — add your topic here",
+        readings: [
+          { book: "Textbook", ch: "ch. 2 — chapter name", range: "31–60", pages: 30 },
+        ],
+        focus: ["key concept 1", "key concept 2"],
+        tip: "add your study tip for this week here.",
+      },
+      {
+        week: 3, dates: "week 3", unit: "u2",
+        theme: "unit 02 — add your topic here",
+        readings: [
+          { book: "Textbook", ch: "ch. 3 — chapter name", range: "61–90", pages: 30 },
+        ],
+        focus: ["key concept 1", "key concept 2"],
+        tip: "add your study tip for this week here.",
+      },
+    ],
+  },
+
+  spring: {
+    label: "spring semester",
+    subtitle: "add your spring semester details here.",
+    units: {
+      u1: { label: "unit 01", sub: "topic", weeks: "1–3" },
+      u2: { label: "unit 02", sub: "topic", weeks: "4–6" },
+      ur: { label: "review",  sub: "finals",  weeks: "7" },
+    },
+    weeks: [
+      {
+        week: 1, dates: "week 1", unit: "u1",
+        theme: "unit 01 — add your topic here",
+        readings: [
+          { book: "Textbook", ch: "ch. 1 — chapter name", range: "1–30", pages: 30 },
+        ],
+        focus: ["key concept 1", "key concept 2"],
+        tip: "add your study tip for this week here.",
+      },
+      {
+        week: 2, dates: "week 2", unit: "u2",
+        theme: "unit 02 — add your topic here",
+        readings: [
+          { book: "Textbook", ch: "ch. 2 — chapter name", range: "31–60", pages: 30 },
+        ],
+        focus: ["key concept 1", "key concept 2"],
+        tip: "add your study tip for this week here.",
+      },
+    ],
+  },
+
+  summer: {
+    label: "summer semester",
+    subtitle: "13 weeks · june – august · classes start september.",
+    units: {
+      u1: { label: "unit 01", sub: "fluids & burns",   weeks: "1–2"  },
+      u2: { label: "unit 02", sub: "respiratory",      weeks: "3–5"  },
+      u3: { label: "unit 03", sub: "cardiac",          weeks: "6–8"  },
+      u4: { label: "unit 04", sub: "renal",            weeks: "9–11" },
+      up: { label: "pharm",   sub: "drug review",      weeks: "12"   },
+      ur: { label: "review",  sub: "nclex practice",   weeks: "13"   },
+    },
+    weeks: [
+      {
+        week:1, dates:"june 2–8", unit:"u1",
+        theme:"unit 01 — fluids & electrolytes",
+        readings:[
+          {book:"Brunner", ch:"ch. 10 — fluid and electrolytes", range:"224–270", pages:47},
+          {book:"Ball (Peds)", ch:"ch. 18 — alteration in fluid, electrolyte, & acid-base balance", range:"391–422", pages:32},
+        ],
+        focus:["fluid volume excess vs. deficit — know both presentations cold","dehydration & hypovolemic shock: stages + nursing response","electrolyte imbalances: na, k, ca, mg, phos — causes, s/s, tx","acid-base balance — all 4 disorders + abg interpretation","peds: dehydration assessment (fontanelle, tears, urine output)"],
+        tip:"make a master table: each electrolyte → normal range → hypo s/s → hyper s/s → priority nursing action. laminate it. this single table will serve you all semester.",
+      },
+      {
+        week:2, dates:"june 9–15", unit:"u1",
+        theme:"unit 01 — burns + peds skin",
+        readings:[
+          {book:"Brunner", ch:"ch. 57 — management of patients with burn injury", range:"1865–1892", pages:28},
+          {book:"Ball (Peds)", ch:"ch. 31 — alterations in skin integrity (burns section only)", range:"873–882", pages:10},
+        ],
+        focus:["rule of nines (adult) vs. lund-browder chart (peds) — sketch from memory","burn depth: superficial, partial-thickness, full-thickness — appearance & tx","parkland formula: 4 ml × kg × %tbsa — first 8 hrs vs. next 16 hrs","burn phases: emergent, acute, rehabilitative — priority nursing per phase","peds burn differences: proportionally larger head, faster fluid loss"],
+        tip:"practice the parkland formula with 3 different patient weights and %tbsa values. dosage calc exams love this.",
+      },
+      {
+        week:3, dates:"june 16–22", unit:"u2",
+        theme:"unit 02 — respiratory assessment + upper tract",
+        readings:[
+          {book:"Brunner", ch:"ch. 17 — assessment of respiratory function", range:"462–493", pages:32},
+          {book:"Brunner", ch:"ch. 18 — management of patients with upper respiratory tract disorders", range:"494–524", pages:31},
+        ],
+        focus:["respiratory assessment: inspection, palpation, percussion, auscultation","breath sounds: normal, crackles, wheezes, rhonchi, stridor, pleural rub","diagnostic tests: abgs, pfts, bronchoscopy, thoracentesis","upper tract: sinusitis, pharyngitis, tonsillitis, laryngitis, epistaxis","obstructive sleep apnea — cpap teaching points"],
+        tip:"find a youtube lung sounds compilation and listen repeatedly. identifying sounds by ear is a real clinical skill.",
+      },
+      {
+        week:4, dates:"june 23–29", unit:"u2",
+        theme:"unit 02 — lower respiratory tract + peds ent",
+        readings:[
+          {book:"Brunner", ch:"ch. 19 — chest & lower respiratory tract disorders", range:"526–598", pages:73},
+          {book:"Ball (Peds)", ch:"ch. 19 — alteration in ear, nose & throat function", range:"423–454", pages:32},
+          {book:"Ball (Peds)", ch:"ch. 20 — alterations in respiratory function (first half)", range:"455–476", pages:22},
+        ],
+        focus:["pneumonia: community vs. hospital-acquired, aspiration — nursing priorities","tb: transmission, ppd interpretation, airborne precautions, inh teaching","pneumothorax: spontaneous vs. tension — emergency interventions","rsv, bronchiolitis, croup — peds emergencies","otitis media — antibiotic stewardship"],
+        tip:"this is your heaviest reading week (73 pp of brunner alone). break ch. 19 into 3 sittings: infections → obstructive disorders → thoracic/pleural.",
+      },
+      {
+        week:5, dates:"june 30 – july 6", unit:"u2",
+        theme:"unit 02 — copd, cystic fibrosis & peds respiratory",
+        readings:[
+          {book:"Brunner", ch:"ch. 20 — management of patients with chronic pulmonary disease", range:"602–646", pages:45},
+          {book:"Ball (Peds)", ch:"ch. 20 — alterations in respiratory function (finish)", range:"477–498", pages:22},
+        ],
+        focus:["copd: emphysema (pink puffer) vs. chronic bronchitis (blue bloater)","hypoxic drive — why o2 must be low-flow in copd; spo2 target 88–92%","asthma: stepwise management, peak flow monitoring, inhaler technique + spacer","cystic fibrosis: cftr mutation, thick mucus, airway clearance, pancreatic enzymes","mechanical ventilation basics: tv, rr, fio2, peep"],
+        tip:"blue bloater = chronic bronchitis. pink puffer = emphysema. know these by pathophys, not just nickname.",
+      },
+      {
+        week:6, dates:"july 7–13", unit:"u3",
+        theme:"unit 03 — cardiac assessment + cad / angina / mi",
+        readings:[
+          {book:"Brunner", ch:"ch. 21 — assessment of cardiovascular function", range:"650–688", pages:39},
+          {book:"Brunner", ch:"ch. 23 — management of patients with coronary vascular disorders", range:"725–763", pages:39},
+        ],
+        focus:["cardiac assessment: heart sounds s1, s2, s3, s4","murmurs: location, radiation, systolic vs. diastolic","atherosclerosis → stable angina → unstable angina → stemi/nstemi continuum","troponin, ck-mb, myoglobin — timing of elevation post-mi","mona: morphine, oxygen, nitrates, aspirin — rationale for each"],
+        tip:"draw the chest pain comparison table: stable angina vs. unstable angina vs. mi. guaranteed exam material.",
+      },
+      {
+        week:7, dates:"july 14–20", unit:"u3",
+        theme:"unit 03 — heart failure, structural & inflammatory cardiac",
+        readings:[
+          {book:"Brunner", ch:"ch. 24 — structural, infectious & inflammatory cardiac disorders", range:"765–790", pages:26},
+          {book:"Brunner", ch:"ch. 25 — complications from heart disease", range:"793–815", pages:23},
+        ],
+        focus:["chf: left-sided (pulmonary) vs. right-sided (systemic edema)","acute pulmonary edema: upright position, o2, furosemide, nitrates","infective endocarditis: iv drug use risk, splinter hemorrhages","rheumatic heart disease: group a strep → jones criteria → valvular damage","cardiogenic shock: decreased co → decreased perfusion"],
+        tip:"left = lungs. right = body. make it a mantra. orthopneic + crackles = left-sided. ankle edema + jvd = right-sided.",
+      },
+      {
+        week:8, dates:"july 21–27", unit:"u3",
+        theme:"unit 03 — vascular disorders + peds cardiac",
+        readings:[
+          {book:"Brunner", ch:"ch. 26 — vascular disorders & peripheral circulation", range:"817–862", pages:46},
+          {book:"Ball (Peds)", ch:"ch. 21 — alterations in cardiovascular function", range:"499–541", pages:43},
+        ],
+        focus:["arterial vs. venous insufficiency: wound location, pain, appearance","dvt: virchow's triad, anticoagulation, inr monitoring","htn: jnc classifications, lifestyle mods, drug classes","aortic aneurysm: dissecting vs. non-dissecting","congenital heart defects (peds): acyanotic vs. cyanotic"],
+        tip:"acyanotic = left-to-right shunt (vsd, asd, pda). cyanotic = right-to-left (tof). tet spells → knee-chest position.",
+      },
+      {
+        week:9, dates:"july 28 – aug 3", unit:"u4",
+        theme:"unit 04 — renal assessment + kidney disorders",
+        readings:[
+          {book:"Brunner", ch:"ch. 47 — assessment of kidney & urinary function", range:"1534–1552", pages:19},
+          {book:"Brunner", ch:"ch. 48 — management of patients with kidney disorders", range:"1554–1602", pages:49},
+        ],
+        focus:["renal labs: bun, creatinine, gfr, urinalysis findings","aki: pre-renal vs. intra-renal vs. post-renal","ckd stages 1–5, gfr thresholds, uremia symptoms","dialysis: hemodialysis (av fistula care) vs. peritoneal dialysis","ckd diet: restrict k, phos, na, protein, and fluids — know the rationale"],
+        tip:"map each ckd dietary restriction to why: k restricted because kidneys can't excrete it → hyperkalemia → cardiac arrest.",
+      },
+      {
+        week:10, dates:"aug 4–10", unit:"u4",
+        theme:"unit 04 — urinary disorders + male reproductive + peds renal",
+        readings:[
+          {book:"Brunner", ch:"ch. 49 — management of patients with urinary disorders", range:"1604–1636", pages:33},
+          {book:"Brunner", ch:"ch. 53 — male reproductive disorders", range:"1743–1777", pages:35},
+          {book:"Ball (Peds)", ch:"ch. 26 — alterations in genitourinary function", range:"667–700", pages:34},
+        ],
+        focus:["uti vs. pyelonephritis vs. glomerulonephritis vs. nephrotic syndrome","urolithiasis: stone types, strain all urine, hydration teaching","bph: obstructive symptoms, turp procedure, cbi","wilms' tumor (peds): do not palpate the abdomen — classic nclex trap","peds: hypospadias, cryptorchidism, hydrocele, vesicoureteral reflux"],
+        tip:"this is a heavy week (102 pp). prioritize ch. 48 and the wilms tumor section in ball — highest-yield for exams.",
+      },
+      {
+        week:11, dates:"aug 11–17", unit:"u4",
+        theme:"unit 04 — ostomies, urinary diversions & shock",
+        readings:[
+          {book:"Brunner", ch:"ch. 41 — fecal and urinary diversions (ostomy section)", range:"selected pages", pages:null},
+        ],
+        focus:["stoma assessment: pink/red = healthy; pale = ischemia; dark/black = necrosis","colostomy vs. ileostomy: output consistency, skin protection, pouch care","ileal conduit / urostomy / vesicostomy — urinary diversion comparisons","nephrostomy tube: output monitoring, never clamp, keep bag below kidney","cbi: measure true urine output (total output − irrigant infused)"],
+        tip:"new stoma is edematous and shrinks over 6–8 weeks — always measure before ordering pouches.",
+      },
+      {
+        week:12, dates:"aug 18–24", unit:"up",
+        theme:"pharmacology review — priority drug classes",
+        readings:[
+          {book:"Lehne's Pharmacology", ch:"diuretics: furosemide, hctz, spironolactone", range:"review relevant chapters", pages:null},
+          {book:"Lehne's Pharmacology", ch:"cardiac: digoxin, nitrates, beta-blockers, antiarrhythmics", range:"review relevant chapters", pages:null},
+          {book:"Lehne's Pharmacology", ch:"respiratory: albuterol, ipratropium, corticosteroids", range:"review relevant chapters", pages:null},
+          {book:"Davis's Drug Guide", ch:"renal: phosphate binders, erythropoietin, immunosuppressants", range:"reference as needed", pages:null},
+        ],
+        focus:["dosage calculation practice daily — iv rates, weight-based, peds dosing","furosemide: monitor k+ (hypokalemia risk), ototoxicity at high doses","digoxin: therapeutic range 0.5–2.0, toxicity signs (n/v, yellow halos, bradycardia)","beta-blockers: hold if hr < 60 or sbp < 90; never stop abruptly","heparin vs. warfarin: monitoring (aptt vs. pt/inr), antidotes (protamine vs. vitamin k)"],
+        tip:"you must pass the dosage calc exam at 95%. do 10 calculation problems every single day this week.",
+      },
+      {
+        week:13, dates:"aug 25–31", unit:"ur",
+        theme:"full review + nclex practice",
+        readings:[
+          {book:"all units", ch:"review notes, concept maps, and chapter summaries", range:"—", pages:null},
+        ],
+        focus:["25–30 nclex-style questions per day — timed","lab values cold: abgs, bmp, bun/cr, troponin, inr, cbc","review all nursing care plan priorities: fluid, resp, cardiac, renal","review dosage calcs one final time","orientation: check your program calendar for date and location"],
+        tip:"don't read new content this week. consolidate. when you get a question wrong, read the full rationale and ask why each wrong answer was wrong.",
+      },
+    ],
+  },
+};
+
+// ── COLORS ─────────────────────────────────────────────────────────
+const SWATCHES = [
+  "#0D9488","#0891B2","#2563EB","#4F46E5","#7C3AED",
+  "#9333EA","#C026D3","#DB2777","#E11D48","#DC2626",
+  "#EA580C","#D97706","#CA8A04","#65A30D","#16A34A",
+  "#059669","#0F766E","#1D4ED8","#6D28D9","#BE185D",
+];
+const DEFAULT_COLORS = {
+  u1:"#0D9488", u2:"#2563EB", u3:"#DB2777",
+  u4:"#7C3AED", up:"#EA580C", ur:"#16A34A",
+};
+const COLOR_KEY = 'firefly_nursing_colors';
+const CHECK_KEY = 'firefly_nursing_checks';
+
+function loadColors(){ try{ return JSON.parse(localStorage.getItem(COLOR_KEY)) || {...DEFAULT_COLORS}; }catch(e){ return {...DEFAULT_COLORS}; } }
+function saveColors(c){ try{ localStorage.setItem(COLOR_KEY, JSON.stringify(c)); }catch(e){} }
+function loadChecked(){ try{ return JSON.parse(localStorage.getItem(CHECK_KEY)) || {}; }catch(e){ return {}; } }
+function saveChecked(o){ try{ localStorage.setItem(CHECK_KEY, JSON.stringify(o)); }catch(e){} }
+
+let colors  = loadColors();
+let checked = loadChecked();
+let currentSem = null;
+
+function getColor(uid){ return colors[uid] || '#888'; }
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function switchSem(semKey) {
+  currentSem = semKey;
+  document.querySelectorAll('.sem-tab').forEach(t => t.classList.toggle('active', t.dataset.sem === semKey));
+  const sem = SEMESTERS[semKey];
+  document.getElementById('sem-subtitle').textContent = sem.subtitle;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('prog-card').style.display = 'block';
+  renderUnitStrip(sem);
+  renderWeeks(sem, semKey);
+}
+
+function renderUnitStrip(sem) {
+  const el = document.getElementById('unit-strip');
+  el.innerHTML = '';
+  Object.entries(sem.units).forEach(([uid, m]) => {
+    const c = getColor(uid);
+    el.innerHTML += `<div class="unit-pill" style="background:${c}15;border-color:${c}40">
+      <div class="ul" style="color:${c};font-size:11px;font-weight:700;letter-spacing:1px">${m.label}</div>
+      <div class="us" style="font-size:11px;color:var(--text-secondary);margin-top:2px">${m.sub}</div>
+      <div class="uw" style="font-size:10px;color:var(--text-muted);margin-top:2px">wks ${m.weeks}</div>
+    </div>`;
+  });
+}
+
+function updateProgress(sem, semKey) {
+  const total = sem.weeks.length;
+  const done  = sem.weeks.filter(w =>
+    w.readings.every((_, i) => checked[`${semKey}-${w.week}-${i}`])
+  ).length;
+  document.getElementById('prog-label').textContent = `${done} / ${total}`;
+  document.getElementById('prog-fill').style.width = `${total ? (done/total)*100 : 0}%`;
+}
+
+function renderWeeks(sem, semKey) {
+  const container = document.getElementById('weeks-container');
+  container.innerHTML = '';
+  sem.weeks.forEach(week => {
+    const c = getColor(week.unit);
+    const card = document.createElement('div');
+    card.className = 'week-card';
+    card.id = `week-${semKey}-${week.week}`;
+    const allDone = week.readings.every((_, i) => checked[`${semKey}-${week.week}-${i}`]);
+    const pageTotal = week.readings.reduce((s, r) => s + (r.pages || 0), 0);
+    card.innerHTML = `
+      <button class="week-btn" aria-expanded="false">
+        <div class="week-header">
+          <div class="week-num" style="background:${c}18;border:1px solid ${c}40;color:${c}">${week.week}</div>
+          <div class="week-meta">
+            <div class="week-top">
+              <span class="week-date" style="color:${c}">${week.dates}</span>
+              ${pageTotal ? `<span class="badge" style="background:${c}15;color:${c};border:1px solid ${c}30">${pageTotal} pp</span>` : ''}
+              ${allDone ? `<span class="badge badge-done">✓ done</span>` : ''}
+            </div>
+            <div class="week-title">${week.theme}</div>
+          </div>
+          <span class="chevron">▼</span>
+        </div>
+      </button>
+      <div class="week-body">
+        <div class="wdivider"></div>
+        <div class="section-label">readings</div>
+        <div class="reading-list" id="reads-${semKey}-${week.week}"></div>
+        <div class="two-col">
+          <div class="focus-box">
+            <div class="section-label">key concepts</div>
+            ${week.focus.map(f => `<div class="focus-item"><span class="focus-arrow" style="color:${c}">›</span><span class="focus-text">${f}</span></div>`).join('')}
+          </div>
+          <div class="tip-box" style="background:${c}10;border:1px solid ${c}25">
+            <div class="tip-label" style="color:${c}">study tip</div>
+            <div class="tip-text">${week.tip}</div>
+          </div>
+        </div>
+      </div>`;
+    card.querySelector('.week-btn').addEventListener('click', () => {
+      const open = card.classList.contains('open');
+      document.querySelectorAll('.week-card.open').forEach(c2 => {
+        c2.classList.remove('open');
+        c2.querySelector('.week-btn').setAttribute('aria-expanded', 'false');
+      });
+      if (!open) {
+        card.classList.add('open');
+        card.querySelector('.week-btn').setAttribute('aria-expanded', 'true');
+      }
+    });
+    renderReadings(week, card, semKey, sem);
+    container.appendChild(card);
+  });
+  updateProgress(sem, semKey);
+}
+
+function renderReadings(week, card, semKey, sem) {
+  const c = getColor(week.unit);
+  const list = card.querySelector(`#reads-${semKey}-${week.week}`);
+  list.innerHTML = '';
+  week.readings.forEach((r, i) => {
+    const key  = `${semKey}-${week.week}-${i}`;
+    const done = !!checked[key];
+    const div  = document.createElement('div');
+    div.className = 'reading-item';
+    div.setAttribute('role', 'checkbox');
+    div.setAttribute('aria-checked', done ? 'true' : 'false');
+    div.setAttribute('tabindex', '0');
+    div.innerHTML = `
+      <div class="checkbox ${done ? 'checked' : ''}" style="${done ? `background:${c};border-color:${c}` : ''}">
+        ${done ? '✓' : ''}
+      </div>
+      <div class="reading-text">
+        <div class="reading-ch ${done ? 'checked' : ''}">${r.ch}</div>
+        <div class="reading-meta">${r.book}${r.range && r.range !== '—' ? ` · pp. ${r.range}` : ''}${r.pages ? ` · ${r.pages} pages` : ''}</div>
+      </div>`;
+    const toggle = () => {
+      checked[key] = !checked[key];
+      saveChecked(checked);
+      renderReadings(week, card, semKey, sem);
+      updateProgress(sem, semKey);
+      const top = card.querySelector('.week-top');
+      const existing = top.querySelector('.badge-done');
+      const nowDone = week.readings.every((_, j) => checked[`${semKey}-${week.week}-${j}`]);
+      if (nowDone && !existing) {
+        const b = document.createElement('span');
+        b.className = 'badge badge-done';
+        b.textContent = '✓ done';
+        top.appendChild(b);
+      } else if (!nowDone && existing) {
+        existing.remove();
+      }
+    };
+    div.addEventListener('click', toggle);
+    div.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }});
+    list.appendChild(div);
+  });
+}
+
+// ── COLOR PICKER ───────────────────────────────────────────────────
+function renderColorPicker() {
+  const el = document.getElementById('cp-rows');
+  el.innerHTML = '';
+  const sem = currentSem ? SEMESTERS[currentSem] : null;
+  const units = sem ? sem.units : DEFAULT_COLORS;
+  Object.keys(units).forEach(uid => {
+    const row = document.createElement('div');
+    row.className = 'cp-unit-row';
+    const swatchHTML = SWATCHES.map(hex =>
+      `<div class="cp-swatch ${colors[uid] === hex ? 'active' : ''}" style="background:${hex}" data-uid="${uid}" data-hex="${hex}"></div>`
+    ).join('');
+    const label = sem ? sem.units[uid]?.label : uid;
+    row.innerHTML = `<div class="cp-unit-name">${label || uid}</div><div class="cp-swatches">${swatchHTML}</div>`;
+    el.appendChild(row);
+  });
+  el.querySelectorAll('.cp-swatch').forEach(s => {
+    s.addEventListener('click', () => {
+      colors[s.dataset.uid] = s.dataset.hex;
+      saveColors(colors);
+      if (currentSem) {
+        const sem = SEMESTERS[currentSem];
+        renderUnitStrip(sem);
+        renderWeeks(sem, currentSem);
+      }
+      renderColorPicker();
+    });
+  });
+}
+
+const fab   = document.getElementById('color-fab');
+const panel = document.getElementById('color-panel');
+fab.addEventListener('click', () => {
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) renderColorPicker();
+});
+document.getElementById('cp-done').addEventListener('click', () => panel.classList.remove('open'));
+document.addEventListener('click', e => {
+  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== fab) {
+    panel.classList.remove('open');
+  }
+});
+
+// ── INIT ───────────────────────────────────────────────────────────
+// auto-open summer since that's the one with full data
+switchSem('summer');
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>firefly</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+
+    <nav>
+      <a href="index.html" class="nav-logo">firefly</a>
+      <div class="nav-links">
+        <a href="index.html">home</a>
+      </div>
+    </nav>
+
+    <div class="datetime-bar">
+      <span class="dt-time" id="clock">--:--:--</span>
+      <span class="dt-sep">·</span>
+      <span class="dt-date" id="dateline">loading...</span>
+    </div>
+
+    <div class="page-header">
+      <h1>welcome back</h1>
+      <p>here's everything in one place.</p>
+    </div>
+
+    <div class="grid">
+
+      <a href="health.html" class="card">
+        <p class="card-title">health & fitness</p>
+        <p class="card-desc">workouts, habits, weight, sleep — track what matters.</p>
+        <span class="tag tag-health">health</span>
+      </a>
+
+      <a href="work.html" class="card">
+        <p class="card-title">work & productivity</p>
+        <p class="card-desc">tasks, notes, and focus — stay on top of your day.</p>
+        <span class="tag tag-work">work</span>
+      </a>
+
+      <a href="projects.html" class="card">
+        <p class="card-title">personal projects</p>
+        <p class="card-desc">ideas, side projects, and things you're building.</p>
+        <span class="tag tag-projects">projects</span>
+      </a>
+
+      <a href="goals.html" class="card">
+        <p class="card-title">goals & planning</p>
+        <p class="card-desc">short and long-term goals, milestones, and progress.</p>
+        <span class="tag tag-goals">goals</span>
+      </a>
+
+      <a href="books.html" class="card">
+        <p class="card-title">books & reading</p>
+        <p class="card-desc">reading list, notes, quotes, and books finished.</p>
+        <span class="tag tag-books">books</span>
+      </a>
+
+      <a href="nursing.html" class="card">
+        <p class="card-title">nursing</p>
+        <p class="card-desc">study schedules by semester — fall, spring, and summer.</p>
+        <span class="tag tag-nursing">nursing</span>
+      </a>
+
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const s = now.getSeconds().toString().padStart(2, '0');
+      document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+
+      const days   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+      const d = now;
+      document.getElementById('dateline').textContent =
+        days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

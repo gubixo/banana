@@ -240,6 +240,29 @@
       <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     </div>
 
+    <!-- reschedule bar (summer only) -->
+    <div id="reschedule-bar" style="display:none;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:1.5rem;">
+      <div style="font-size:10px;letter-spacing:3px;font-family:monospace;color:var(--text-muted);margin-bottom:10px;text-transform:lowercase;">start date</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="start-month" style="flex:1;font-size:14px;font-family:'DM Sans',sans-serif;text-transform:lowercase;border:1px solid var(--border);border-radius:8px;padding:7px 10px;background:#f9f8f6;color:#1a1a18;appearance:none;-webkit-appearance:none;">
+          <option value="01">january</option>
+          <option value="02">february</option>
+          <option value="03">march</option>
+          <option value="04">april</option>
+          <option value="05">may</option>
+          <option value="06">june</option>
+          <option value="07">july</option>
+          <option value="08">august</option>
+          <option value="09">september</option>
+          <option value="10">october</option>
+          <option value="11">november</option>
+          <option value="12">december</option>
+        </select>
+        <select id="start-day" style="flex:1;font-size:14px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:8px;padding:7px 10px;background:#f9f8f6;color:#1a1a18;appearance:none;-webkit-appearance:none;"></select>
+      </div>
+      <button id="reschedule-btn" style="width:100%;padding:9px;border-radius:8px;border:none;background:#1a1a18;color:#f9f8f6;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:700;text-transform:lowercase;cursor:pointer;">reschedule →</button>
+    </div>
+
     <!-- empty state -->
     <div id="empty-state" style="text-align:center;padding:4rem 0;color:var(--text-muted);font-size:14px;">
       <div style="font-size:32px;margin-bottom:12px;">📖</div>
@@ -496,6 +519,42 @@ const DEFAULT_COLORS = {
 };
 const COLOR_KEY = 'firefly_nursing_colors';
 const CHECK_KEY = 'firefly_nursing_checks';
+const DATE_KEY  = 'firefly_nursing_startdate';
+
+// ── DATE HELPERS ───────────────────────────────────────────────────
+const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function loadStartDate(){ try{ return localStorage.getItem(DATE_KEY)||'2025-06-02'; }catch(e){ return '2025-06-02'; } }
+function saveStartDate(d){ try{ localStorage.setItem(DATE_KEY,d); }catch(e){} }
+function fmtDate(d){ return MONTH_NAMES[d.getMonth()]+' '+d.getDate(); }
+
+function calcWeekDates(startISO, totalWeeks, deadlineISO) {
+  const start    = new Date(startISO+'T00:00:00');
+  const deadline = new Date(deadlineISO+'T00:00:00');
+  const totalDays = Math.floor((deadline - start) / 86400000);
+  const dpw = Math.max(7, Math.round(totalDays / totalWeeks));
+  return Array.from({length: totalWeeks}, (_, i) => {
+    const ws = new Date(start.getTime() + i * dpw * 86400000);
+    const we = i === totalWeeks - 1
+      ? new Date(deadlineISO+'T00:00:00')
+      : new Date(ws.getTime() + (dpw - 1) * 86400000);
+    return ws.getMonth() === we.getMonth()
+      ? fmtDate(ws) + '–' + we.getDate()
+      : fmtDate(ws) + ' – ' + fmtDate(we);
+  });
+}
+
+function populateDays(month, selectedDay) {
+  const dayEl = document.getElementById('start-day');
+  const days  = new Date(2025, parseInt(month), 0).getDate();
+  dayEl.innerHTML = '';
+  for (let d = 1; d <= days; d++) {
+    const opt = document.createElement('option');
+    opt.value = String(d).padStart(2,'0');
+    opt.textContent = d;
+    if (String(d).padStart(2,'0') === selectedDay) opt.selected = true;
+    dayEl.appendChild(opt);
+  }
+}
 
 function loadColors(){ try{ return JSON.parse(localStorage.getItem(COLOR_KEY)) || {...DEFAULT_COLORS}; }catch(e){ return {...DEFAULT_COLORS}; } }
 function saveColors(c){ try{ localStorage.setItem(COLOR_KEY, JSON.stringify(c)); }catch(e){} }
@@ -509,6 +568,8 @@ let currentSem = null;
 function getColor(uid){ return colors[uid] || '#888'; }
 
 // ── RENDER ─────────────────────────────────────────────────────────
+let summerStartDate = loadStartDate();
+
 function switchSem(semKey) {
   currentSem = semKey;
   document.querySelectorAll('.sem-tab').forEach(t => t.classList.toggle('active', t.dataset.sem === semKey));
@@ -516,6 +577,18 @@ function switchSem(semKey) {
   document.getElementById('sem-subtitle').textContent = sem.subtitle;
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('prog-card').style.display = 'block';
+
+  // show reschedule bar only for summer
+  const bar = document.getElementById('reschedule-bar');
+  if (semKey === 'summer') {
+    bar.style.display = 'block';
+    const parts = summerStartDate.split('-');
+    document.getElementById('start-month').value = parts[1];
+    populateDays(parts[1], parts[2]);
+  } else {
+    bar.style.display = 'none';
+  }
+
   renderUnitStrip(sem);
   renderWeeks(sem, semKey);
 }
@@ -545,20 +618,28 @@ function updateProgress(sem, semKey) {
 function renderWeeks(sem, semKey) {
   const container = document.getElementById('weeks-container');
   container.innerHTML = '';
-  sem.weeks.forEach(week => {
+
+  // for summer, calculate dynamic week dates from start date
+  let weekDates = null;
+  if (semKey === 'summer') {
+    weekDates = calcWeekDates(summerStartDate, sem.weeks.length, '2025-08-31');
+  }
+
+  sem.weeks.forEach((week, idx) => {
     const c = getColor(week.unit);
     const card = document.createElement('div');
     card.className = 'week-card';
     card.id = `week-${semKey}-${week.week}`;
     const allDone = week.readings.every((_, i) => checked[`${semKey}-${week.week}-${i}`]);
     const pageTotal = week.readings.reduce((s, r) => s + (r.pages || 0), 0);
+    const displayDate = weekDates ? weekDates[idx] : week.dates;
     card.innerHTML = `
       <button class="week-btn" aria-expanded="false">
         <div class="week-header">
           <div class="week-num" style="background:${c}18;border:1px solid ${c}40;color:${c}">${week.week}</div>
           <div class="week-meta">
             <div class="week-top">
-              <span class="week-date" style="color:${c}">${week.dates}</span>
+              <span class="week-date" style="color:${c}">${displayDate}</span>
               ${pageTotal ? `<span class="badge" style="background:${c}15;color:${c};border:1px solid ${c}30">${pageTotal} pp</span>` : ''}
               ${allDone ? `<span class="badge badge-done">✓ done</span>` : ''}
             </div>
@@ -683,6 +764,22 @@ document.addEventListener('click', e => {
   if (panel.classList.contains('open') && !panel.contains(e.target) && e.target !== fab) {
     panel.classList.remove('open');
   }
+});
+
+// ── RESCHEDULE BUTTON ─────────────────────────────────────────────
+document.getElementById('start-month').addEventListener('change', function() {
+  populateDays(this.value, '01');
+});
+
+document.getElementById('reschedule-btn').addEventListener('click', () => {
+  const month = document.getElementById('start-month').value;
+  const day   = document.getElementById('start-day').value;
+  summerStartDate = `2025-${month}-${day}`;
+  saveStartDate(summerStartDate);
+  renderWeeks(SEMESTERS['summer'], 'summer');
+  const btn = document.getElementById('reschedule-btn');
+  btn.textContent = 'updated ✓';
+  setTimeout(() => btn.textContent = 'reschedule →', 1500);
 });
 
 // ── INIT ───────────────────────────────────────────────────────────

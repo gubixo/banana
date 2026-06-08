@@ -202,39 +202,19 @@
       --text-secondary: #6b6b66;
       --text-muted: #a8a8a2;
     }
-
-    /* ── nav (matching books.html) ── */
-    nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1.1rem 2rem;
-      border-bottom: 1px solid var(--border);
-      background: #f9f8f6;
-      position: sticky; top: 0; z-index: 10;
-    }
-    .nav-logo { font-size: 18px; font-weight: 700; color: var(--text-primary); text-decoration: none; letter-spacing: -0.5px; }
-    .back-link { font-size: 13px; color: var(--text-secondary); text-decoration: none; transition: color .15s; }
-    .back-link:hover { color: var(--text-primary); }
-
-    .page { max-width: 780px; margin: 0 auto; padding: 1.25rem 2rem 2.5rem; }
-
-    @media (max-width: 500px) {
-      .page { padding: 1.5rem 1.25rem; }
-      nav { padding: 1rem 1.25rem; }
-    }
   </style>
 </head>
 <body>
+  <div class="page">
 
-<nav>
-  <a class="nav-logo" href="index.html">banana.</a>
-  <div class="nav-links">
-    <a href="index.html">casita</a>
-  </div>
-</nav>
+    <nav>
+      <a href="index.html" class="nav-logo">banana.</a>
+      <div class="nav-links">
+        <a href="index.html">casita</a>
+      </div>
+    </nav>
 
-<div class="page">
-
-  <a href="index.html" class="back-link">← back</a>
+    <a href="index.html" class="back-link">← back</a>
 
     <div class="section-header">
       <span class="section-label tag tag-nursing" id="nursing-label" style="background:#E6F1FB;color:#185FA5;">nursing</span>
@@ -293,7 +273,7 @@
     <!-- weeks accordion -->
     <div class="weeks" id="weeks-container"></div>
 
-</div>
+  </div>
 
   <!-- color picker fab -->
   <button id="color-fab" aria-label="customize colors">🎨</button>
@@ -304,7 +284,9 @@
   </div>
 
 <script>
-// ── SEMESTER DATA ──────────────────────────────────────────────────────────────────────────────
+// ── SEMESTER DATA ──────────────────────────────────────────────────
+// Each semester has: label, subtitle, units (metadata), and weeks (schedule).
+// Add your real content here — this is placeholder structure to get you started.
 
 const SEMESTERS = {
   fall: {
@@ -540,6 +522,7 @@ const COLOR_KEY = 'firefly_nursing_colors';
 const CHECK_KEY = 'firefly_nursing_checks';
 const DATE_KEY  = 'firefly_nursing_startdate';
 
+// ── DATE HELPERS ───────────────────────────────────────────────────
 const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 function loadStartDate(){ try{ return localStorage.getItem(DATE_KEY)||'2025-06-02'; }catch(e){ return '2025-06-02'; } }
 function saveStartDate(d){ try{ localStorage.setItem(DATE_KEY,d); }catch(e){} }
@@ -585,6 +568,7 @@ let currentSem = null;
 
 function getColor(uid){ return colors[uid] || '#888'; }
 
+// ── RENDER ─────────────────────────────────────────────────────────
 let summerStartDate = loadStartDate();
 
 function switchSem(semKey) {
@@ -595,6 +579,7 @@ function switchSem(semKey) {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('prog-card').style.display = 'block';
 
+  // show reschedule bar only for summer
   const bar = document.getElementById('reschedule-bar');
   if (semKey === 'summer') {
     bar.style.display = 'block';
@@ -635,6 +620,7 @@ function renderWeeks(sem, semKey) {
   const container = document.getElementById('weeks-container');
   container.innerHTML = '';
 
+  // for summer, calculate dynamic week dates from start date
   let weekDates = null;
   if (semKey === 'summer') {
     weekDates = calcWeekDates(summerStartDate, sem.weeks.length, '2025-08-31');
@@ -781,6 +767,7 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── RESCHEDULE BUTTON ─────────────────────────────────────────────
 document.getElementById('start-month').addEventListener('change', function() {
   populateDays(this.value, '01');
 });
@@ -796,6 +783,8 @@ document.getElementById('reschedule-btn').addEventListener('click', () => {
   setTimeout(() => btn.textContent = 'reschedule →', 1500);
 });
 
+// ── INIT ───────────────────────────────────────────────────────────
+// auto-open summer since that's the one with full data
 switchSem('summer');
 </script>
 </body>

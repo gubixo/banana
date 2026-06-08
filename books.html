@@ -22,7 +22,7 @@
       --books-bg: #fad9f5;
       --books-text: #c95bb9;
       /* status colors */
-      --reading-bg: #EAF3DE; --reading-text: #3B6D11;
+      --reading-bg: #dcf2ae; --reading-text: #a4c95b;
       --finished-bg: #E6F1FB; --finished-text: #185FA5;
       --want-bg: #fad9f5;     --want-text: #c95bb9;
       --dropped-bg: #f1f1ef;  --dropped-text: #6b6b66;
@@ -334,7 +334,7 @@
     const size = 42, stroke = 3, r = (size - stroke) / 2;
     const circ = 2 * Math.PI * r;
     const offset = circ - (pct / 100) * circ;
-    const color = pct === 100 ? '#185FA5' : '#3B6D11';
+    const color = pct === 100 ? '#185FA5' : '#b2ed3b';
     return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg);flex-shrink:0">
       <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"/>
       <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}"

@@ -42,7 +42,10 @@
       position: sticky; top: 0; z-index: 10;
     }
     .nav-logo { font-size: 18px; font-weight: 700; color: var(--text-primary); text-decoration: none; letter-spacing: -0.5px; }
-    .back-link { font-size: 13px; color: var(--text-secondary); text-decoration: none; transition: color .15s; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { font-size: 13px; color: var(--text-secondary); text-decoration: none; transition: color .15s; }
+    .nav-links a:hover { color: var(--text-primary); }
+    .back-link { display: inline-block; font-size: 13px; color: var(--text-secondary); text-decoration: none; transition: color .15s; margin-bottom: 1.5rem; }
     .back-link:hover { color: var(--text-primary); }
 
     .page { max-width: 780px; margin: 0 auto; padding: 2.5rem 2rem; }
@@ -196,16 +199,15 @@
 <body>
 
 <nav>
-      <a href="index.html" class="nav-logo">banana.</a>
-      <div class="nav-links">
-        <a href="index.html">casita</a>
-      </div>
+  <a class="nav-logo" href="index.html">banana.</a>
+  <div class="nav-links">
+    <a href="index.html">casita</a>
+  </div>
 </nav>
 
-    <a href="index.html" class="back-link">← back</a>
-
-
 <div class="page">
+
+  <a href="index.html" class="back-link">← back</a>
 
   <div class="header-row">
     <div class="section-header" style="margin-bottom:0">

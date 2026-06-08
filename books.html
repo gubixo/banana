@@ -313,7 +313,7 @@
         nextId = Math.max(...books.map(b => b.id), 0) + 1;
       } else {
         books = [
-          { id: 1, title: "Of Mice and Men", author: "John Steinbeck", genre: "fiction", status: "finished", progress: 107, totalPages: 107, notes: "heartbreaking and tragic", dateAdded: "2026-01-10" },
+          { id: 1, title: "Of Mice and Men", author: "John Steinbeck", genre: "fiction", status: "finished", progress: 100, totalPages: 107, notes: "heartbreaking and tragic", dateAdded: "2026-01-10" },
           { id: 2, title: "The Sun Also Rises", author: "Ernest Hemingway", genre: "fiction", status: "reading", progress: 65, totalPages: 250, notes: "", dateAdded: "2026-04-27" },
         ];
         nextId = 3; save();
@@ -334,7 +334,7 @@
     const size = 42, stroke = 3, r = (size - stroke) / 2;
     const circ = 2 * Math.PI * r;
     const offset = circ - (pct / 100) * circ;
-    const color = pct === 100 ? '#185FA5' : '#c95bb9';
+    const color = pct === 100 ? '#185FA5' : '#3B6D11';
     return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg);flex-shrink:0">
       <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"/>
       <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}"

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>banana — books</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e0e;
+      --surface: #141414;
+      --border: #1e1e1e;
+      --border2: #252525;
+      --text: #d4cdc6;
+      --muted: #4a4a4a;
+      --muted2: #333;
+      --accent-pink: #f9a8d4;
+      --accent-green: #4ade80;
+      --accent-blue: #60a5fa;
+      --accent-slate: #94a3b8;
+      --font: 'DM Sans', sans-serif;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+
+    body { min-height: 100vh; padding-bottom: 80px; }
+
+    /* ── nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+    nav .logo { font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none; }
+    nav .logo span { color: var(--accent-pink); }
+    nav .back { font-size: 12px; color: var(--muted); text-decoration: none; transition: color .15s; }
+    nav .back:hover { color: var(--text); }
+
+    /* ── page wrapper ── */
+    .page { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+    /* ── page header ── */
+    .page-header {
+      padding: 36px 0 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-header h1 { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .page-header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── stats row ── */
+    .stats {
+      display: flex;
+      gap: 28px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .stat-num { font-size: 20px; font-weight: 700; }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.3px; }
+
+    /* ── controls ── */
+    .controls {
+      display: flex;
+      gap: 8px;
+      padding: 20px 0 16px;
+      flex-wrap: wrap;
+    }
+    .controls input, .controls select {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    .controls input { flex-grow: 1; min-width: 140px; cursor: text; }
+    .controls input::placeholder { color: var(--muted2); }
+    .controls select option { background: #1a1a1a; }
+
+    /* ── filter pills ── */
+    .filters {
+      display: flex;
+      gap: 6px;
+      padding-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      background: transparent;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .pill:hover { border-color: var(--text); color: var(--text); }
+    .pill.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
+
+    /* ── book list ── */
+    .book-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .book-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      transition: border-color .15s;
+    }
+    .book-card:hover { border-color: var(--border2); }
+
+    /* progress ring */
+    .ring-wrap { flex-shrink: 0; }
+    .ring-bg { fill: none; stroke: #222; }
+    .ring-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+
+    .book-info { flex: 1; min-width: 0; }
+    .book-title { font-weight: 700; font-size: 14px; color: var(--text); }
+    .book-author { font-size: 12px; color: var(--muted); margin-left: 8px; }
+    .book-meta { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .tag-reading  { background: #4ade8015; color: var(--accent-green); }
+    .tag-finished { background: #60a5fa15; color: var(--accent-blue); }
+    .tag-want     { background: #f9a8d415; color: var(--accent-pink); }
+    .tag-dropped  { background: #94a3b815; color: var(--accent-slate); }
+
+    .book-genre, .book-pages { font-size: 11px; color: var(--muted); }
+    .book-notes { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 5px; }
+
+    .book-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm {
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      padding: 4px 10px;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-sm:hover { color: var(--text); border-color: var(--text); }
+    .btn-sm.del:hover { color: #ff6b6b; border-color: #ff6b6b; }
+
+    /* ── empty state ── */
+    .empty { text-align: center; color: var(--muted2); padding: 60px 0; font-size: 13px; }
+
+    /* ── add button ── */
+    .btn-add {
+      background: var(--accent-pink);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      transition: opacity .15s;
+      white-space: nowrap;
+    }
+    .btn-add:hover { opacity: .85; }
+
+    /* ── modal overlay ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: #111;
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 28px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(12px);
+      transition: transform .2s;
+    }
+    .overlay.open .modal { transform: translateY(0); }
+
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 22px; }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.3px; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 8px 11px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #3a3a3a; }
+    .field textarea { resize: vertical; }
+    .field input[type="range"] { padding: 0; border: none; background: transparent; accent-color: var(--accent-pink); }
+    .field select option { background: #1a1a1a; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 22px; }
+    .btn-submit {
+      flex: 1;
+      background: var(--accent-pink);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-submit:hover { opacity: .85; }
+    .btn-cancel {
+      background: #1a1a1a;
+      color: var(--muted);
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 500px) {
+      .page { padding: 0 18px; }
+      nav { padding: 14px 18px; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">banana<span>.</span></a>
+  <a class="back" href="index.html">← back</a>
+</nav>
+
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>books</h1>
+      <p>reading list, notes, and books finished.</p>
+    </div>
+    <button class="btn-add" onclick="openModal()">+ add book</button>
+  </div>
+
+  <div class="stats">
+    <div><div class="stat-num" id="stat-total">0</div><div class="stat-label">total</div></div>
+    <div><div class="stat-num" id="stat-finished">0</div><div class="stat-label">finished</div></div>
+    <div><div class="stat-num" id="stat-reading">0</div><div class="stat-label">reading</div></div>
+    <div><div class="stat-num" id="stat-pages">0</div><div class="stat-label">pages read</div></div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search-input" placeholder="search title or author..." oninput="render()" />
+    <select id="sort-select" onchange="render()">
+      <option value="dateAdded">newest</option>
+      <option value="title">title a–z</option>
+      <option value="progress">progress</option>
+    </select>
+  </div>
+
+  <div class="filters" id="filter-pills">
+    <button class="pill active" data-filter="all" onclick="setFilter(this)">all</button>
+    <button class="pill" data-filter="reading" onclick="setFilter(this)">reading</button>
+    <button class="pill" data-filter="finished" onclick="setFilter(this)">finished</button>
+    <button class="pill" data-filter="want to read" onclick="setFilter(this)">want to read</button>
+    <button class="pill" data-filter="dropped" onclick="setFilter(this)">dropped</button>
+  </div>
+
+  <div class="book-list" id="book-list"></div>
+
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2 id="modal-title">add a book</h2>
+
+    <div class="field">
+      <label>title *</label>
+      <input type="text" id="f-title" placeholder="book title" />
+    </div>
+    <div class="field">
+      <label>author</label>
+      <input type="text" id="f-author" placeholder="author name" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>genre</label>
+        <select id="f-genre">
+          <option>fiction</option><option>nonfiction</option><option>memoir</option>
+          <option>sci-fi</option><option>fantasy</option><option>mystery</option>
+          <option>romance</option><option>history</option><option>self-help</option>
+          <option>poetry</option><option>nursing</option><option>other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>status</label>
+        <select id="f-status">
+          <option value="want to read">want to read</option>
+          <option value="reading">reading</option>
+          <option value="finished">finished</option>
+          <option value="dropped">dropped</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>total pages</label>
+      <input type="number" id="f-pages" placeholder="e.g. 320" min="0" />
+    </div>
+    <div class="field">
+      <label id="progress-label">progress — 0%</label>
+      <input type="range" id="f-progress" min="0" max="100" value="0"
+        oninput="document.getElementById('progress-label').textContent = 'progress — ' + this.value + '%'" />
+    </div>
+    <div class="field">
+      <label>notes</label>
+      <textarea id="f-notes" rows="3" placeholder="thoughts, quotes, feelings..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">add to log</button>
+      <button class="btn-cancel" onclick="closeModal()">cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'banana-books';
+  let books = [];
+  let editId = null;
+  let activeFilter = 'all';
+  let nextId = 1;
+
+  // ── load from localStorage ──
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        books = JSON.parse(raw);
+        nextId = Math.max(...books.map(b => b.id), 0) + 1;
+      } else {
+        // sample data
+        books = [
+          { id: 1, title: "Crying in H Mart", author: "Michelle Zauner", genre: "memoir", status: "finished", progress: 100, totalPages: 239, notes: "so beautiful and devastating", dateAdded: "2025-01-10" },
+          { id: 2, title: "Pachinko", author: "Min Jin Lee", genre: "fiction", status: "reading", progress: 55, totalPages: 496, notes: "", dateAdded: "2025-03-02" },
+        ];
+        nextId = 3;
+        save();
+      }
+    } catch(e) { books = []; }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  }
+
+  // ── filter ──
+  function setFilter(el) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    activeFilter = el.dataset.filter;
+    render();
+  }
+
+  // ── ring svg ──
+  function ring(pct) {
+    const size = 44, stroke = 3.5, r = (size - stroke) / 2;
+    const circ = 2 * Math.PI * r;
+    const offset = circ - (pct / 100) * circ;
+    const color = pct === 100 ? 'var(--accent-blue)' : 'var(--accent-pink)';
+    return `<svg class="ring-wrap" width="${size}" height="${size}" style="transform:rotate(-90deg);flex-shrink:0">
+      <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"/>
+      <circle class="ring-fill" cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+    </svg>`;
+  }
+
+  function tagClass(status) {
+    return { reading: 'tag-reading', finished: 'tag-finished', 'want to read': 'tag-want', dropped: 'tag-dropped' }[status] || '';
+  }
+
+  // ── render ──
+  function render() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const sort = document.getElementById('sort-select').value;
+
+    let visible = books
+      .filter(b => activeFilter === 'all' || b.status === activeFilter)
+      .filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search));
+
+    visible.sort((a, b) => {
+      if (sort === 'dateAdded') return b.dateAdded.localeCompare(a.dateAdded);
+      if (sort === 'title')     return a.title.localeCompare(b.title);
+      if (sort === 'progress')  return b.progress - a.progress;
+      return 0;
+    });
+
+    const list = document.getElementById('book-list');
+    if (visible.length === 0) {
+      list.innerHTML = '<div class="empty">no books here yet.</div>';
+    } else {
+      list.innerHTML = visible.map(b => {
+        const pagesText = b.totalPages > 0
+          ? `${b.status === 'finished' ? b.totalPages : Math.round(b.totalPages * b.progress / 100)} / ${b.totalPages} pages`
+          : '';
+        return `<div class="book-card">
+          ${ring(b.progress)}
+          <div class="book-info">
+            <div>
+              <span class="book-title">${b.title}</span>
+              ${b.author ? `<span class="book-author">by ${b.author}</span>` : ''}
+            </div>
+            <div class="book-meta">
+              <span class="tag ${tagClass(b.status)}">${b.status}</span>
+              ${b.genre ? `<span class="book-genre">${b.genre}</span>` : ''}
+              ${pagesText ? `<span class="book-pages">${pagesText}</span>` : ''}
+            </div>
+            ${b.notes ? `<div class="book-notes">"${b.notes}"</div>` : ''}
+          </div>
+          <div class="book-actions">
+            <button class="btn-sm" onclick="openEdit(${b.id})">edit</button>
+            <button class="btn-sm del" onclick="deleteBook(${b.id})">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // stats
+    document.getElementById('stat-total').textContent = books.length;
+    document.getElementById('stat-finished').textContent = books.filter(b => b.status === 'finished').length;
+    document.getElementById('stat-reading').textContent = books.filter(b => b.status === 'reading').length;
+    document.getElementById('stat-pages').textContent = books.reduce((s, b) => s + (b.status === 'finished' ? (b.totalPages || 0) : 0), 0).toLocaleString();
+  }
+
+  // ── modal ──
+  function openModal() {
+    editId = null;
+    document.getElementById('modal-title').textContent = 'add a book';
+    document.getElementById('btn-submit').textContent = 'add to log';
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-author').value = '';
+    document.getElementById('f-genre').value = 'fiction';
+    document.getElementById('f-status').value = 'want to read';
+    document.getElementById('f-pages').value = '';
+    document.getElementById('f-progress').value = 0;
+    document.getElementById('progress-label').textContent = 'progress — 0%';
+    document.getElementById('f-notes').value = '';
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('f-title').focus();
+  }
+
+  function openEdit(id) {
+    const b = books.find(x => x.id === id);
+    if (!b) return;
+    editId = id;
+    document.getElementById('modal-title').textContent = 'edit book';
+    document.getElementById('btn-submit').textContent = 'save changes';
+    document.getElementById('f-title').value = b.title;
+    document.getElementById('f-author').value = b.author || '';
+    document.getElementById('f-genre').value = b.genre || 'fiction';
+    document.getElementById('f-status').value = b.status;
+    document.getElementById('f-pages').value = b.totalPages || '';
+    document.getElementById('f-progress').value = b.progress || 0;
+    document.getElementById('progress-label').textContent = 'progress — ' + (b.progress || 0) + '%';
+    document.getElementById('f-notes').value = b.notes || '';
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  }
+
+  function submitForm() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { document.getElementById('f-title').focus(); return; }
+
+    const entry = {
+      title,
+      author:     document.getElementById('f-author').value.trim(),
+      genre:      document.getElementById('f-genre').value,
+      status:     document.getElementById('f-status').value,
+      totalPages: parseInt(document.getElementById('f-pages').value) || 0,
+      progress:   parseInt(document.getElementById('f-progress').value) || 0,
+      notes:      document.getElementById('f-notes').value.trim(),
+    };
+
+    if (editId !== null) {
+      books = books.map(b => b.id === editId ? { ...b, ...entry } : b);
+    } else {
+      books.push({ ...entry, id: nextId++, dateAdded: new Date().toISOString().slice(0, 10) });
+    }
+
+    save();
+    closeModal();
+    render();
+  }
+
+  function deleteBook(id) {
+    books = books.filter(b => b.id !== id);
+    save();
+    render();
+  }
+
+  // ── init ──
+  load();
+  render();
+</script>
+</body>
+</html>
